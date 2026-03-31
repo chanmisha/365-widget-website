@@ -135,7 +135,7 @@ export function BeamsBackground({
   return (
     <div
       className={cn(
-        "relative min-h-[100dvh] w-full overflow-hidden bg-neutral-950",
+        "relative h-[100dvh] w-full overflow-hidden bg-[#030303]",
         className
       )}
     >
@@ -154,7 +154,7 @@ export function BeamsBackground({
         }}
         style={{ backdropFilter: "blur(50px)" }}
       />
-      <div className="relative z-10 flex items-center justify-center min-h-[100dvh] w-full p-4 sm:p-6">
+      <div className="relative z-10 flex items-center justify-center h-full w-full p-4 sm:p-6">
         {children}
       </div>
     </div>
