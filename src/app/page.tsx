@@ -124,13 +124,6 @@ export default function LandingPage() {
                 borderRadius: "32px 32px 0 0",
               }}
             />
-            {/* specular edge */}
-            <div
-              className="absolute inset-x-[10%] top-[0.5px] h-[1px] rounded-full pointer-events-none"
-              style={{
-                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4) 25%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.4) 75%, transparent)",
-              }}
-            />
 
             <div className="relative z-10 px-6 sm:px-10 w-full" style={{ transform: "translateZ(30px)" }}>
               <div className="flex justify-center mb-6 sm:mb-8">
@@ -194,12 +187,6 @@ export default function LandingPage() {
               style={{
                 background: "linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 100%)",
                 borderRadius: "32px 32px 0 0",
-              }}
-            />
-            <div
-              className="absolute inset-x-[10%] top-[0.5px] h-[1px] rounded-full pointer-events-none"
-              style={{
-                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4) 25%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.4) 75%, transparent)",
               }}
             />
 

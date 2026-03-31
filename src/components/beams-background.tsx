@@ -141,11 +141,11 @@ export function BeamsBackground({
     >
       <canvas
         ref={canvasRef}
-        className="absolute inset-0"
+        className="fixed inset-0"
         style={{ filter: "blur(15px)" }}
       />
       <motion.div
-        className="absolute inset-0 bg-neutral-950/5"
+        className="fixed inset-0 bg-neutral-950/5"
         animate={{ opacity: [0.05, 0.15, 0.05] }}
         transition={{
           duration: 10,
