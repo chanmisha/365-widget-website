@@ -116,14 +116,6 @@ export default function LandingPage() {
                 opacity: hovered ? 1 : 0,
               }}
             />
-            {/* top reflection */}
-            <div
-              className="absolute inset-x-0 top-0 h-[30%] pointer-events-none"
-              style={{
-                background: "linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 100%)",
-                borderRadius: "32px 32px 0 0",
-              }}
-            />
 
             <div className="relative z-10 px-6 sm:px-10 w-full" style={{ transform: "translateZ(30px)" }}>
               <div className="flex justify-center mb-6 sm:mb-8">
@@ -179,14 +171,6 @@ export default function LandingPage() {
               style={{
                 background: "radial-gradient(circle at var(--glow-x) var(--glow-y), rgba(255,255,255,0.12) 0%, transparent 60%)",
                 opacity: hovered && flipped ? 1 : 0,
-              }}
-            />
-            {/* top reflection */}
-            <div
-              className="absolute inset-x-0 top-0 h-[30%] pointer-events-none"
-              style={{
-                background: "linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 100%)",
-                borderRadius: "32px 32px 0 0",
               }}
             />
 

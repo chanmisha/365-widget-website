@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface Beam {
@@ -55,13 +54,15 @@ export function BeamsBackground({
 
     const updateCanvasSize = () => {
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
-      ctx.scale(dpr, dpr);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       beamsRef.current = Array.from({ length: 30 }, () =>
-        createBeam(canvas.width, canvas.height)
+        createBeam(w * dpr, h * dpr)
       );
     };
 
@@ -73,10 +74,7 @@ export function BeamsBackground({
       const column = index % 3;
       const spacing = canvas.width / 3;
       beam.y = canvas.height + 100;
-      beam.x =
-        column * spacing +
-        spacing / 2 +
-        (Math.random() - 0.5) * spacing * 0.5;
+      beam.x = column * spacing + spacing / 2 + (Math.random() - 0.5) * spacing * 0.5;
       beam.width = 100 + Math.random() * 100;
       beam.speed = 0.5 + Math.random() * 0.4;
       beam.hue = 190 + (index * 70) / beamsRef.current.length;
@@ -88,21 +86,15 @@ export function BeamsBackground({
       ctx.save();
       ctx.translate(beam.x, beam.y);
       ctx.rotate((beam.angle * Math.PI) / 180);
-
-      const pulsingOpacity =
-        beam.opacity *
-        (0.8 + Math.sin(beam.pulse) * 0.2) *
-        opacityMap[intensity];
-
-      const gradient = ctx.createLinearGradient(0, 0, 0, beam.length);
-      gradient.addColorStop(0, `hsla(${beam.hue}, 85%, 65%, 0)`);
-      gradient.addColorStop(0.1, `hsla(${beam.hue}, 85%, 65%, ${pulsingOpacity * 0.5})`);
-      gradient.addColorStop(0.4, `hsla(${beam.hue}, 85%, 65%, ${pulsingOpacity})`);
-      gradient.addColorStop(0.6, `hsla(${beam.hue}, 85%, 65%, ${pulsingOpacity})`);
-      gradient.addColorStop(0.9, `hsla(${beam.hue}, 85%, 65%, ${pulsingOpacity * 0.5})`);
-      gradient.addColorStop(1, `hsla(${beam.hue}, 85%, 65%, 0)`);
-
-      ctx.fillStyle = gradient;
+      const p = beam.opacity * (0.8 + Math.sin(beam.pulse) * 0.2) * opacityMap[intensity];
+      const g = ctx.createLinearGradient(0, 0, 0, beam.length);
+      g.addColorStop(0, `hsla(${beam.hue},85%,65%,0)`);
+      g.addColorStop(0.1, `hsla(${beam.hue},85%,65%,${p * 0.5})`);
+      g.addColorStop(0.4, `hsla(${beam.hue},85%,65%,${p})`);
+      g.addColorStop(0.6, `hsla(${beam.hue},85%,65%,${p})`);
+      g.addColorStop(0.9, `hsla(${beam.hue},85%,65%,${p * 0.5})`);
+      g.addColorStop(1, `hsla(${beam.hue},85%,65%,0)`);
+      ctx.fillStyle = g;
       ctx.fillRect(-beam.width / 2, 0, beam.width, beam.length);
       ctx.restore();
     }
@@ -111,16 +103,12 @@ export function BeamsBackground({
       if (!canvas || !ctx) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.filter = "blur(35px)";
-
-      beamsRef.current.forEach((beam, index) => {
+      beamsRef.current.forEach((beam, i) => {
         beam.y -= beam.speed;
         beam.pulse += beam.pulseSpeed;
-        if (beam.y + beam.length < -100) {
-          resetBeam(beam, index);
-        }
+        if (beam.y + beam.length < -100) resetBeam(beam, i);
         drawBeam(ctx, beam);
       });
-
       animationFrameRef.current = requestAnimationFrame(animate);
     }
 
@@ -135,26 +123,16 @@ export function BeamsBackground({
   return (
     <div
       className={cn(
-        "relative h-[100dvh] w-full overflow-hidden bg-[#030303]",
+        "fixed inset-0 w-full h-full overflow-hidden bg-[#030303]",
         className
       )}
     >
       <canvas
         ref={canvasRef}
-        className="fixed inset-0"
+        className="absolute inset-0"
         style={{ filter: "blur(15px)" }}
       />
-      <motion.div
-        className="fixed inset-0 bg-neutral-950/5"
-        animate={{ opacity: [0.05, 0.15, 0.05] }}
-        transition={{
-          duration: 10,
-          ease: "easeInOut",
-          repeat: Infinity,
-        }}
-        style={{ backdropFilter: "blur(50px)" }}
-      />
-      <div className="relative z-10 flex items-center justify-center h-full w-full p-4 sm:p-6">
+      <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6">
         {children}
       </div>
     </div>

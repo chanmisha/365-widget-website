@@ -13,7 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" className="antialiased">
-      <body className="bg-[#030303] overflow-x-hidden overscroll-none">{children}</body>
+      <body className="bg-[#030303] overflow-hidden overscroll-none h-[100dvh] w-full">{children}</body>
     </html>
   );
 }
