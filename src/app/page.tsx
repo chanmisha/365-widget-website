@@ -85,13 +85,13 @@ export default function LandingPage() {
   return (
     <BeamsBackground intensity="medium">
       {/* perspective wrapper */}
-      <div className="relative w-full max-w-lg max-h-[90dvh]" style={{ perspective: 1200 }}>
+      <div className="relative" style={{ perspective: 1200, width: "min(90vw, 85dvh, 32rem)", height: "min(90vw, 85dvh, 32rem)" }}>
         <div
           ref={cardRef}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
           onClick={handleClick}
-          className="relative w-full aspect-square max-h-[85dvh] cursor-pointer transition-all duration-700 ease-out hover:scale-[1.03]"
+          className="relative w-full h-full cursor-pointer transition-all duration-700 ease-out hover:scale-[1.03]"
           style={{
             "--glow-x": "50%",
             "--glow-y": "50%",
