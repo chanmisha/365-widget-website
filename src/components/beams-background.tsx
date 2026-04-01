@@ -51,8 +51,9 @@ export function BeamsBackground({
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      // use screen dimensions as fallback — covers iOS Safari quirks
+      const w = Math.max(window.innerWidth, screen.width);
+      const h = Math.max(window.innerHeight, screen.height);
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
@@ -63,6 +64,8 @@ export function BeamsBackground({
 
     resize();
     window.addEventListener("resize", resize);
+    // iOS Safari fires orientationchange separately
+    window.addEventListener("orientationchange", () => setTimeout(resize, 100));
 
     const draw = () => {
       if (!canvas || !ctx) return;
@@ -113,9 +116,10 @@ export function BeamsBackground({
     <div
       style={{
         position: "fixed",
-        inset: 0,
-        width: "100%",
-        height: "100%",
+        top: "-5vh",
+        left: "-5vw",
+        width: "110vw",
+        height: "110vh",
         background: "#0a0a0a",
         overflow: "hidden",
       }}
@@ -124,7 +128,8 @@ export function BeamsBackground({
         ref={canvasRef}
         style={{
           position: "absolute",
-          inset: 0,
+          top: 0,
+          left: 0,
           width: "100%",
           height: "100%",
           filter: "blur(15px)",
@@ -132,14 +137,13 @@ export function BeamsBackground({
       />
       <div
         style={{
-          position: "relative",
+          position: "fixed",
+          inset: 0,
           zIndex: 10,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          width: "100%",
-          height: "100%",
-          padding: "16px",
+          padding: "env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 16px)",
         }}
       >
         {children}
