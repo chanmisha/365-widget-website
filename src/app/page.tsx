@@ -108,7 +108,7 @@ export default function LandingPage() {
             ref={tiltRef}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            className="absolute inset-0 cursor-pointer transition-transform duration-200 ease-out hover:scale-[1.03]"
+            className="absolute inset-0 cursor-pointer transition-[scale] duration-700 ease-out hover:scale-[1.03]"
             style={{
               "--glow-x": "50%",
               "--glow-y": "50%",
