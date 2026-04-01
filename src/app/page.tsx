@@ -148,8 +148,8 @@ export default function LandingPage() {
                     className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] sm:text-xs text-white/50 tracking-wide"
                     style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500/80" />
-                    Coming Soon
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500/80 animate-pulse" />
+                    Скоро
                   </span>
                 </div>
 
