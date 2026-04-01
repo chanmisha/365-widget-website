@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { cn } from "@/lib/utils";
 
 interface Beam {
   x: number;
@@ -16,12 +15,12 @@ interface Beam {
   pulseSpeed: number;
 }
 
-function createBeam(width: number, height: number): Beam {
+function createBeam(w: number, h: number): Beam {
   return {
-    x: Math.random() * width * 1.5 - width * 0.25,
-    y: Math.random() * height * 1.5 - height * 0.25,
+    x: Math.random() * w * 1.5 - w * 0.25,
+    y: Math.random() * h * 1.5 - h * 0.25,
     width: 30 + Math.random() * 60,
-    length: height * 2.5,
+    length: h * 2.5,
     angle: -35 + Math.random() * 10,
     speed: 0.6 + Math.random() * 1.2,
     opacity: 0.12 + Math.random() * 0.16,
@@ -32,7 +31,6 @@ function createBeam(width: number, height: number): Beam {
 }
 
 export function BeamsBackground({
-  className,
   children,
   intensity = "strong",
 }: {
@@ -42,8 +40,7 @@ export function BeamsBackground({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const beamsRef = useRef<Beam[]>([]);
-  const animationFrameRef = useRef<number>(0);
-
+  const rafRef = useRef<number>(0);
   const opacityMap = { subtle: 0.7, medium: 0.85, strong: 1 };
 
   useEffect(() => {
@@ -52,7 +49,7 @@ export function BeamsBackground({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const updateCanvasSize = () => {
+    const resize = () => {
       const dpr = window.devicePixelRatio || 1;
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -61,78 +58,89 @@ export function BeamsBackground({
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      beamsRef.current = Array.from({ length: 30 }, () =>
-        createBeam(w * dpr, h * dpr)
-      );
+      beamsRef.current = Array.from({ length: 30 }, () => createBeam(w * dpr, h * dpr));
     };
 
-    updateCanvasSize();
-    window.addEventListener("resize", updateCanvasSize);
+    resize();
+    window.addEventListener("resize", resize);
 
-    function resetBeam(beam: Beam, index: number) {
-      if (!canvas) return beam;
-      const column = index % 3;
-      const spacing = canvas.width / 3;
-      beam.y = canvas.height + 100;
-      beam.x = column * spacing + spacing / 2 + (Math.random() - 0.5) * spacing * 0.5;
-      beam.width = 100 + Math.random() * 100;
-      beam.speed = 0.5 + Math.random() * 0.4;
-      beam.hue = 190 + (index * 70) / beamsRef.current.length;
-      beam.opacity = 0.2 + Math.random() * 0.1;
-      return beam;
-    }
-
-    function drawBeam(ctx: CanvasRenderingContext2D, beam: Beam) {
-      ctx.save();
-      ctx.translate(beam.x, beam.y);
-      ctx.rotate((beam.angle * Math.PI) / 180);
-      const p = beam.opacity * (0.8 + Math.sin(beam.pulse) * 0.2) * opacityMap[intensity];
-      const g = ctx.createLinearGradient(0, 0, 0, beam.length);
-      g.addColorStop(0, `hsla(${beam.hue},85%,65%,0)`);
-      g.addColorStop(0.1, `hsla(${beam.hue},85%,65%,${p * 0.5})`);
-      g.addColorStop(0.4, `hsla(${beam.hue},85%,65%,${p})`);
-      g.addColorStop(0.6, `hsla(${beam.hue},85%,65%,${p})`);
-      g.addColorStop(0.9, `hsla(${beam.hue},85%,65%,${p * 0.5})`);
-      g.addColorStop(1, `hsla(${beam.hue},85%,65%,0)`);
-      ctx.fillStyle = g;
-      ctx.fillRect(-beam.width / 2, 0, beam.width, beam.length);
-      ctx.restore();
-    }
-
-    function animate() {
+    const draw = () => {
       if (!canvas || !ctx) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.filter = "blur(35px)";
-      beamsRef.current.forEach((beam, i) => {
-        beam.y -= beam.speed;
-        beam.pulse += beam.pulseSpeed;
-        if (beam.y + beam.length < -100) resetBeam(beam, i);
-        drawBeam(ctx, beam);
+
+      beamsRef.current.forEach((b, i) => {
+        b.y -= b.speed;
+        b.pulse += b.pulseSpeed;
+        if (b.y + b.length < -100) {
+          const col = i % 3;
+          const sp = canvas.width / 3;
+          b.y = canvas.height + 100;
+          b.x = col * sp + sp / 2 + (Math.random() - 0.5) * sp * 0.5;
+          b.width = 100 + Math.random() * 100;
+          b.speed = 0.5 + Math.random() * 0.4;
+          b.hue = 190 + (i * 70) / beamsRef.current.length;
+          b.opacity = 0.2 + Math.random() * 0.1;
+        }
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate((b.angle * Math.PI) / 180);
+        const p = b.opacity * (0.8 + Math.sin(b.pulse) * 0.2) * opacityMap[intensity];
+        const g = ctx.createLinearGradient(0, 0, 0, b.length);
+        g.addColorStop(0, `hsla(${b.hue},85%,65%,0)`);
+        g.addColorStop(0.1, `hsla(${b.hue},85%,65%,${p * 0.5})`);
+        g.addColorStop(0.4, `hsla(${b.hue},85%,65%,${p})`);
+        g.addColorStop(0.6, `hsla(${b.hue},85%,65%,${p})`);
+        g.addColorStop(0.9, `hsla(${b.hue},85%,65%,${p * 0.5})`);
+        g.addColorStop(1, `hsla(${b.hue},85%,65%,0)`);
+        ctx.fillStyle = g;
+        ctx.fillRect(-b.width / 2, 0, b.width, b.length);
+        ctx.restore();
       });
-      animationFrameRef.current = requestAnimationFrame(animate);
-    }
 
-    animate();
+      rafRef.current = requestAnimationFrame(draw);
+    };
 
+    draw();
     return () => {
-      window.removeEventListener("resize", updateCanvasSize);
-      cancelAnimationFrame(animationFrameRef.current);
+      window.removeEventListener("resize", resize);
+      cancelAnimationFrame(rafRef.current);
     };
   }, [intensity]);
 
   return (
     <div
-      className={cn(
-        "fixed inset-0 w-full h-full overflow-hidden bg-[#030303]",
-        className
-      )}
+      style={{
+        position: "fixed",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        background: "#0a0a0a",
+        overflow: "hidden",
+      }}
     >
       <canvas
         ref={canvasRef}
-        className="absolute inset-0"
-        style={{ filter: "blur(15px)" }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          filter: "blur(15px)",
+        }}
       />
-      <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6">
+      <div
+        style={{
+          position: "relative",
+          zIndex: 10,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+          height: "100%",
+          padding: "16px",
+        }}
+      >
         {children}
       </div>
     </div>

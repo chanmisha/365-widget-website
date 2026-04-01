@@ -12,8 +12,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className="antialiased h-full bg-[#030303]">
-      <body className="bg-[#030303] overflow-hidden overscroll-none h-[100dvh] w-[100dvw] m-0 p-0">{children}</body>
+    <html lang="ru" className="antialiased bg-[#0a0a0a]">
+      <body className="m-0 p-0 bg-[#0a0a0a] w-screen h-[100dvh] overflow-hidden overscroll-none fixed inset-0">
+        {children}
+      </body>
     </html>
   );
 }
