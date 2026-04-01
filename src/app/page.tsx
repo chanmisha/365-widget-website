@@ -55,20 +55,21 @@ export default function LandingPage() {
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      // normalize to -1..1
-      const nx = (x / rect.width) * 2 - 1;
-      const ny = (y / rect.height) * 2 - 1;
-
-      // ease off near edges — smoothstep-like curve
-      const clamp = (v: number) => Math.max(-1, Math.min(1, v));
-      const ease = (v: number) => {
-        const c = clamp(v);
-        return c * (1 - c * c * 0.3); // reduces intensity near ±1
+      // normalize to -1..1, with inner padding to avoid edge flicker
+      const pad = 0.12;
+      const raw = (v: number, size: number) => {
+        const n = (v / size) * 2 - 1;
+        // dead zone at edges
+        if (Math.abs(n) > 1 - pad) return Math.sign(n) * (1 - pad);
+        return n;
       };
 
-      const maxAngle = 8;
-      const rotateX = ease(-ny) * maxAngle;
-      const rotateY = ease(nx) * maxAngle;
+      const nx = raw(x, rect.width);
+      const ny = raw(y, rect.height);
+
+      const maxAngle = 7;
+      const rotateX = -ny * maxAngle;
+      const rotateY = nx * maxAngle;
 
       const flipBase = flipped ? 180 : 0;
       card.style.transform = `rotateX(${rotateX}deg) rotateY(${flipBase + rotateY}deg)`;
