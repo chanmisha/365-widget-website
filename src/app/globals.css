@@ -126,7 +126,7 @@
     background: #0a0a0a;
   }
   body {
-    @apply text-foreground font-semibold;
+    @apply text-foreground font-normal;
     background: #0a0a0a;
   }
 }
