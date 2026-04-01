@@ -113,11 +113,9 @@ export function BeamsBackground({
     <div
       style={{
         position: "fixed",
-        top: "-10vh",
-        left: 0,
-        width: "100vw",
-        height: "120vh",
-        background: "#0a0a0a",
+        inset: 0,
+        width: "100%",
+        height: "100%",
         overflow: "hidden",
       }}
     >
