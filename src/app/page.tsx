@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useCallback, useState } from "react";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Calendar, Palette, Store, Smartphone } from "lucide-react";
 import { BeamsBackground } from "@/components/beams-background";
 
@@ -41,199 +42,191 @@ const glassStyle: React.CSSProperties = {
 };
 
 export default function LandingPage() {
-  const cardRef = useRef<HTMLDivElement>(null);
   const [flipped, setFlipped] = useState(false);
   const [hovered, setHovered] = useState(false);
   const animating = useRef(false);
 
+  // tilt via springs — bypasses React render, writes directly to DOM
+  const tiltX = useMotionValue(0);
+  const tiltY = useMotionValue(0);
+  const springX = useSpring(tiltX, { stiffness: 200, damping: 20 });
+  const springY = useSpring(tiltY, { stiffness: 200, damping: 20 });
+
+  // glow position
+  const glowX = useMotionValue(50);
+  const glowY = useMotionValue(50);
+  const glowBg = useTransform(
+    () => `radial-gradient(circle at ${glowX.get()}% ${glowY.get()}%, rgba(255,255,255,0.12) 0%, transparent 60%)`
+  );
+
+  // events on STATIC wrapper — its boundary never moves
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (animating.current) return;
-      const card = cardRef.current;
-      if (!card) return;
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      // normalize to -1..1, with inner padding to avoid edge flicker
-      const pad = 0.12;
-      const raw = (v: number, size: number) => {
-        const n = (v / size) * 2 - 1;
-        // dead zone at edges
-        if (Math.abs(n) > 1 - pad) return Math.sign(n) * (1 - pad);
-        return n;
-      };
-
-      const nx = raw(x, rect.width);
-      const ny = raw(y, rect.height);
-
-      const maxAngle = 7;
-      const rotateX = -ny * maxAngle;
-      const rotateY = nx * maxAngle;
-
-      const flipBase = flipped ? 180 : 0;
-      card.style.transform = `rotateX(${rotateX}deg) rotateY(${flipBase + rotateY}deg)`;
-      card.style.setProperty("--glow-x", `${(x / rect.width) * 100}%`);
-      card.style.setProperty("--glow-y", `${(y / rect.height) * 100}%`);
+      const rect = e.currentTarget.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width - 0.5;
+      const py = (e.clientY - rect.top) / rect.height - 0.5;
+      tiltX.set(py * -14);
+      tiltY.set(px * 14);
+      glowX.set(((e.clientX - rect.left) / rect.width) * 100);
+      glowY.set(((e.clientY - rect.top) / rect.height) * 100);
       if (!hovered) setHovered(true);
     },
-    [flipped, hovered]
+    [tiltX, tiltY, glowX, glowY, hovered]
   );
 
   const handleMouseLeave = useCallback(() => {
-    if (animating.current) return;
-    const card = cardRef.current;
-    if (!card) return;
-    const flipBase = flipped ? 180 : 0;
-    card.style.transform = `rotateX(0deg) rotateY(${flipBase}deg)`;
+    tiltX.set(0);
+    tiltY.set(0);
     setHovered(false);
-  }, [flipped]);
+  }, [tiltX, tiltY]);
 
   const handleClick = useCallback(() => {
     if (animating.current) return;
     animating.current = true;
-    const card = cardRef.current;
-    if (!card) return;
-
-    const newFlipped = !flipped;
-    const target = newFlipped ? 180 : 0;
-
-    // set transition, then flip
-    card.style.transition = "transform 0.7s ease-in-out";
-    card.style.transform = `rotateX(0deg) rotateY(${target}deg)`;
-
-    setFlipped(newFlipped);
-
-    // after animation, remove transition so mousemove is instant
+    tiltX.set(0);
+    tiltY.set(0);
+    setFlipped((prev) => !prev);
     setTimeout(() => {
-      card.style.transition = "";
       animating.current = false;
     }, 700);
-  }, [flipped]);
+  }, [tiltX, tiltY]);
 
   return (
     <BeamsBackground intensity="medium">
-      {/* perspective + sizing wrapper */}
+      {/* STATIC wrapper — mouse events here. Never transforms. */}
       <div
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+        className="cursor-pointer"
         style={{
           perspective: 1200,
           width: "min(88vw, 80vh, 32rem)",
           height: "min(88vw, 80vh, 32rem)",
         }}
       >
+        {/* flip layer — CSS transition for 180deg, no interference with tilt */}
         <div
-          ref={cardRef}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          onClick={handleClick}
-          className="relative w-full h-full cursor-pointer"
+          className="relative w-full h-full transition-transform duration-700 ease-in-out"
           style={{
-            "--glow-x": "50%",
-            "--glow-y": "50%",
             transformStyle: "preserve-3d",
-          } as React.CSSProperties}
+            transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+          }}
         >
-          {/* ═══ FRONT ═══ */}
-          <div
-            className="absolute inset-0 rounded-[28px] sm:rounded-[36px] overflow-hidden flex items-center"
+          {/* tilt layer — spring-based, instant, no CSS transition */}
+          <motion.div
+            className="absolute inset-0"
             style={{
-              ...glassStyle,
-              backfaceVisibility: "hidden",
-              WebkitBackfaceVisibility: "hidden",
+              rotateX: springX,
+              rotateY: springY,
+              transformStyle: "preserve-3d",
+              willChange: "transform",
             }}
           >
+            {/* ═══ FRONT ═══ */}
             <div
-              className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+              className="absolute inset-0 rounded-[28px] sm:rounded-[36px] overflow-hidden flex items-center"
               style={{
-                background: "radial-gradient(circle at var(--glow-x) var(--glow-y), rgba(255,255,255,0.12) 0%, transparent 60%)",
-                opacity: hovered && !flipped ? 1 : 0,
+                ...glassStyle,
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
               }}
-            />
+            >
+              <motion.div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: glowBg,
+                  opacity: hovered && !flipped ? 1 : 0,
+                  transition: "opacity 0.3s",
+                }}
+              />
 
-            <div className="relative z-10 px-5 sm:px-8 md:px-10 w-full">
-              <div className="flex justify-center mb-4 sm:mb-6 md:mb-8">
-                <span
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] sm:text-xs text-white/50 tracking-wide"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500/80" />
-                  Coming Soon
-                </span>
+              <div className="relative z-10 px-5 sm:px-8 md:px-10 w-full">
+                <div className="flex justify-center mb-4 sm:mb-6 md:mb-8">
+                  <span
+                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] sm:text-xs text-white/50 tracking-wide"
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500/80" />
+                    Coming Soon
+                  </span>
+                </div>
+
+                <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-center tracking-tight leading-[1.15] mb-2 sm:mb-4">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-b from-white to-white/80">
+                    365 Виджет
+                  </span>
+                  <br />
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-violet-400 to-rose-400">
+                    Календарь
+                  </span>
+                </h1>
+
+                <p className="text-center text-xs sm:text-sm md:text-base text-white/35 font-light mb-5 sm:mb-8 max-w-xs mx-auto">
+                  Маркет виджетов в стиле отрывного календаря для iOS.
+                </p>
+
+                <p className="text-center text-[11px] sm:text-sm text-white/45 font-light inline-flex items-center justify-center gap-2 w-full">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="opacity-70">
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+                  </svg>
+                  Скоро в App Store
+                </p>
+
+                <p className="text-center text-white/15 text-[9px] sm:text-[10px] mt-5 sm:mt-8">
+                  &copy; 2026 &ldquo;365 Виджет&rdquo;
+                </p>
               </div>
-
-              <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-center tracking-tight leading-[1.15] mb-2 sm:mb-4">
-                <span className="bg-clip-text text-transparent bg-gradient-to-b from-white to-white/80">
-                  365 Виджет
-                </span>
-                <br />
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-violet-400 to-rose-400">
-                  Календарь
-                </span>
-              </h1>
-
-              <p className="text-center text-xs sm:text-sm md:text-base text-white/35 font-light mb-5 sm:mb-8 max-w-xs mx-auto">
-                Маркет виджетов в стиле отрывного календаря для iOS.
-              </p>
-
-              <p className="text-center text-[11px] sm:text-sm text-white/45 font-light inline-flex items-center justify-center gap-2 w-full">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="opacity-70">
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-                </svg>
-                Скоро в App Store
-              </p>
-
-              <p className="text-center text-white/15 text-[9px] sm:text-[10px] mt-5 sm:mt-8">
-                &copy; 2026 &ldquo;365 Виджет&rdquo;
-              </p>
             </div>
-          </div>
 
-          {/* ═══ BACK ═══ */}
-          <div
-            className="absolute inset-0 rounded-[28px] sm:rounded-[36px] overflow-hidden flex items-center"
-            style={{
-              ...glassStyle,
-              backfaceVisibility: "hidden",
-              WebkitBackfaceVisibility: "hidden",
-              transform: "rotateY(180deg)",
-            }}
-          >
+            {/* ═══ BACK ═══ */}
             <div
-              className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+              className="absolute inset-0 rounded-[28px] sm:rounded-[36px] overflow-hidden flex items-center [transform:rotateY(180deg)]"
               style={{
-                background: "radial-gradient(circle at var(--glow-x) var(--glow-y), rgba(255,255,255,0.12) 0%, transparent 60%)",
-                opacity: hovered && flipped ? 1 : 0,
+                ...glassStyle,
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
               }}
-            />
+            >
+              <motion.div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: glowBg,
+                  opacity: hovered && flipped ? 1 : 0,
+                  transition: "opacity 0.3s",
+                }}
+              />
 
-            <div className="relative z-10 px-5 sm:px-8 md:px-10 w-full">
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-center text-white/80 mb-5 sm:mb-8">
-                Возможности
-              </h2>
+              <div className="relative z-10 px-5 sm:px-8 md:px-10 w-full">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-center text-white/80 mb-5 sm:mb-8">
+                  Возможности
+                </h2>
 
-              <div className="grid grid-cols-2 gap-3 sm:gap-5 mb-5 sm:mb-8">
-                {features.map((f) => (
-                  <div key={f.title} className="flex flex-col gap-1.5 sm:gap-2">
-                    <div
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center"
-                      style={{
-                        background: "rgba(255,255,255,0.05)",
-                        border: "1px solid rgba(255,255,255,0.06)",
-                      }}
-                    >
-                      <f.icon className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-white/50" strokeWidth={1.5} />
+                <div className="grid grid-cols-2 gap-3 sm:gap-5 mb-5 sm:mb-8">
+                  {features.map((f) => (
+                    <div key={f.title} className="flex flex-col gap-1.5 sm:gap-2">
+                      <div
+                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center"
+                        style={{
+                          background: "rgba(255,255,255,0.05)",
+                          border: "1px solid rgba(255,255,255,0.06)",
+                        }}
+                      >
+                        <f.icon className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-white/50" strokeWidth={1.5} />
+                      </div>
+                      <h3 className="text-[11px] sm:text-sm font-semibold text-white/80">{f.title}</h3>
+                      <p className="text-[10px] sm:text-xs text-white/30 font-light leading-relaxed">{f.desc}</p>
                     </div>
-                    <h3 className="text-[11px] sm:text-sm font-semibold text-white/80">{f.title}</h3>
-                    <p className="text-[10px] sm:text-xs text-white/30 font-light leading-relaxed">{f.desc}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              <p className="text-center text-white/20 text-[10px] sm:text-[11px]">
-                Нажмите, чтобы вернуться
-              </p>
+                <p className="text-center text-white/20 text-[10px] sm:text-[11px]">
+                  Нажмите, чтобы вернуться
+                </p>
+              </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </BeamsBackground>
