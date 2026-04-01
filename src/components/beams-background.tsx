@@ -23,7 +23,7 @@ function createBeam(w: number, h: number): Beam {
     length: h * 2.5,
     angle: -35 + Math.random() * 10,
     speed: 0.6 + Math.random() * 1.2,
-    opacity: 0.12 + Math.random() * 0.16,
+    opacity: 0.22 + Math.random() * 0.2,
     hue: 190 + Math.random() * 70,
     pulse: Math.random() * Math.PI * 2,
     pulseSpeed: 0.02 + Math.random() * 0.03,
@@ -80,19 +80,20 @@ export function BeamsBackground({
           b.width = 100 + Math.random() * 100;
           b.speed = 0.5 + Math.random() * 0.4;
           b.hue = 190 + (i * 70) / beamsRef.current.length;
-          b.opacity = 0.2 + Math.random() * 0.1;
+          b.opacity = 0.28 + Math.random() * 0.15;
         }
         ctx.save();
         ctx.translate(b.x, b.y);
         ctx.rotate((b.angle * Math.PI) / 180);
         const p = b.opacity * (0.8 + Math.sin(b.pulse) * 0.2) * opacityMap[intensity];
         const g = ctx.createLinearGradient(0, 0, 0, b.length);
-        g.addColorStop(0, `hsla(${b.hue},85%,65%,0)`);
-        g.addColorStop(0.1, `hsla(${b.hue},85%,65%,${p * 0.5})`);
-        g.addColorStop(0.4, `hsla(${b.hue},85%,65%,${p})`);
-        g.addColorStop(0.6, `hsla(${b.hue},85%,65%,${p})`);
-        g.addColorStop(0.9, `hsla(${b.hue},85%,65%,${p * 0.5})`);
-        g.addColorStop(1, `hsla(${b.hue},85%,65%,0)`);
+        g.addColorStop(0, `hsla(${b.hue},100%,70%,0)`);
+        g.addColorStop(0.1, `hsla(${b.hue},100%,70%,${p * 0.6})`);
+        g.addColorStop(0.35, `hsla(${b.hue},100%,72%,${p})`);
+        g.addColorStop(0.5, `hsla(${b.hue},100%,75%,${p * 1.1})`);
+        g.addColorStop(0.65, `hsla(${b.hue},100%,72%,${p})`);
+        g.addColorStop(0.9, `hsla(${b.hue},100%,70%,${p * 0.6})`);
+        g.addColorStop(1, `hsla(${b.hue},100%,70%,0)`);
         ctx.fillStyle = g;
         ctx.fillRect(-b.width / 2, 0, b.width, b.length);
         ctx.restore();
