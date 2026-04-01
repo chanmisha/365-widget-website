@@ -1,140 +1,92 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-
-interface Beam {
-  x: number;
-  y: number;
-  width: number;
-  length: number;
-  angle: number;
-  speed: number;
-  opacity: number;
-  hue: number;
-  pulse: number;
-  pulseSpeed: number;
-}
-
-function createBeam(w: number, h: number): Beam {
-  return {
-    x: Math.random() * w * 1.5 - w * 0.25,
-    y: Math.random() * h * 1.5 - h * 0.25,
-    width: 30 + Math.random() * 60,
-    length: h * 2.5,
-    angle: -35 + Math.random() * 10,
-    speed: 0.6 + Math.random() * 1.2,
-    opacity: 0.22 + Math.random() * 0.2,
-    hue: 190 + Math.random() * 70,
-    pulse: Math.random() * Math.PI * 2,
-    pulseSpeed: 0.02 + Math.random() * 0.03,
-  };
-}
-
 export function BeamsBackground({
   children,
-  intensity = "strong",
 }: {
   className?: string;
   children?: React.ReactNode;
-  intensity?: "subtle" | "medium" | "strong";
+  intensity?: string;
 }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const beamsRef = useRef<Beam[]>([]);
-  const rafRef = useRef<number>(0);
-  const opacityMap = { subtle: 0.7, medium: 0.85, strong: 1 };
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const resize = () => {
-      const dpr = window.devicePixelRatio || 1;
-      // use screen dimensions as fallback — covers iOS Safari quirks
-      const w = Math.max(window.innerWidth, screen.width);
-      const h = Math.max(window.innerHeight, screen.height);
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      canvas.style.width = `${w}px`;
-      canvas.style.height = `${h}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      beamsRef.current = Array.from({ length: 30 }, () => createBeam(w * dpr, h * dpr));
-    };
-
-    resize();
-    window.addEventListener("resize", resize);
-    // iOS Safari fires orientationchange separately
-    window.addEventListener("orientationchange", () => setTimeout(resize, 100));
-
-    const draw = () => {
-      if (!canvas || !ctx) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.filter = "blur(35px)";
-
-      beamsRef.current.forEach((b, i) => {
-        b.y -= b.speed;
-        b.pulse += b.pulseSpeed;
-        if (b.y + b.length < -100) {
-          const col = i % 3;
-          const sp = canvas.width / 3;
-          b.y = canvas.height + 100;
-          b.x = col * sp + sp / 2 + (Math.random() - 0.5) * sp * 0.5;
-          b.width = 100 + Math.random() * 100;
-          b.speed = 0.5 + Math.random() * 0.4;
-          b.hue = 190 + (i * 70) / beamsRef.current.length;
-          b.opacity = 0.28 + Math.random() * 0.15;
-        }
-        ctx.save();
-        ctx.translate(b.x, b.y);
-        ctx.rotate((b.angle * Math.PI) / 180);
-        const p = b.opacity * (0.8 + Math.sin(b.pulse) * 0.2) * opacityMap[intensity];
-        const g = ctx.createLinearGradient(0, 0, 0, b.length);
-        g.addColorStop(0, `hsla(${b.hue},100%,70%,0)`);
-        g.addColorStop(0.1, `hsla(${b.hue},100%,70%,${p * 0.6})`);
-        g.addColorStop(0.35, `hsla(${b.hue},100%,72%,${p})`);
-        g.addColorStop(0.5, `hsla(${b.hue},100%,75%,${p * 1.1})`);
-        g.addColorStop(0.65, `hsla(${b.hue},100%,72%,${p})`);
-        g.addColorStop(0.9, `hsla(${b.hue},100%,70%,${p * 0.6})`);
-        g.addColorStop(1, `hsla(${b.hue},100%,70%,0)`);
-        ctx.fillStyle = g;
-        ctx.fillRect(-b.width / 2, 0, b.width, b.length);
-        ctx.restore();
-      });
-
-      rafRef.current = requestAnimationFrame(draw);
-    };
-
-    draw();
-    return () => {
-      window.removeEventListener("resize", resize);
-      cancelAnimationFrame(rafRef.current);
-    };
-  }, [intensity]);
-
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: "-5vh",
-        left: "-5vw",
-        width: "110vw",
-        height: "110vh",
-        background: "#0a0a0a",
-        overflow: "hidden",
-      }}
-    >
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          filter: "blur(15px)",
-        }}
-      />
+    <>
+      {/* background — pure CSS, covers everything including safe areas */}
+      <style>{`
+        html, body {
+          background: #0a0a0a !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        .beams-bg {
+          position: fixed;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: #0a0a0a;
+          z-index: 0;
+        }
+        .beams-bg::before,
+        .beams-bg::after {
+          content: '';
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(80px);
+          animation: drift 20s ease-in-out infinite alternate;
+        }
+        .beams-bg::before {
+          top: 20%;
+          left: 10%;
+          width: 50%;
+          height: 50%;
+          background: radial-gradient(circle, hsla(220,100%,70%,0.15), transparent 70%);
+        }
+        .beams-bg::after {
+          bottom: 10%;
+          right: 10%;
+          width: 45%;
+          height: 45%;
+          background: radial-gradient(circle, hsla(280,100%,70%,0.12), transparent 70%);
+          animation-delay: -10s;
+          animation-direction: alternate-reverse;
+        }
+        .beams-blob1 {
+          position: absolute;
+          top: 40%;
+          left: 50%;
+          width: 40%;
+          height: 40%;
+          border-radius: 50%;
+          background: radial-gradient(circle, hsla(200,100%,70%,0.10), transparent 70%);
+          filter: blur(80px);
+          animation: drift2 25s ease-in-out infinite alternate;
+        }
+        .beams-blob2 {
+          position: absolute;
+          top: 10%;
+          right: 20%;
+          width: 35%;
+          height: 35%;
+          border-radius: 50%;
+          background: radial-gradient(circle, hsla(320,100%,70%,0.08), transparent 70%);
+          filter: blur(80px);
+          animation: drift 18s ease-in-out infinite alternate-reverse;
+        }
+        @keyframes drift {
+          0% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(5%, -8%) scale(1.1); }
+          66% { transform: translate(-3%, 5%) scale(0.95); }
+          100% { transform: translate(8%, 3%) scale(1.05); }
+        }
+        @keyframes drift2 {
+          0% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+          50% { transform: translate(-10%, 8%) scale(1.15); opacity: 1; }
+          100% { transform: translate(5%, -5%) scale(0.9); opacity: 0.7; }
+        }
+      `}</style>
+      <div className="beams-bg">
+        <div className="beams-blob1" />
+        <div className="beams-blob2" />
+      </div>
       <div
         style={{
           position: "fixed",
@@ -143,11 +95,11 @@ export function BeamsBackground({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 16px)",
+          padding: 16,
         }}
       >
         {children}
       </div>
-    </div>
+    </>
   );
 }
