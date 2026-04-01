@@ -7,7 +7,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#0a0a0a",
+  themeColor: "#000000",
 };
 
 export const metadata: Metadata = {
@@ -25,8 +25,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" style={{ background: "#0a0a0a", margin: 0, padding: 0 }}>
-      <body style={{ background: "#0a0a0a", margin: 0, padding: 0, overflow: "hidden" }}>
+    <html lang="ru" style={{ background: "#000000", margin: 0, padding: 0 }}>
+      <body style={{ background: "#000000", margin: 0, padding: 0, overflow: "hidden" }}>
         {children}
       </body>
     </html>

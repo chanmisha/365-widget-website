@@ -12,7 +12,7 @@ export function BeamsBackground({
       {/* background — pure CSS, covers everything including safe areas */}
       <style>{`
         html, body {
-          background: #0a0a0a !important;
+          background: #000000 !important;
           margin: 0 !important;
           padding: 0 !important;
         }
@@ -22,7 +22,7 @@ export function BeamsBackground({
           left: -50%;
           width: 200%;
           height: 200%;
-          background: #0a0a0a;
+          background: #000000;
           z-index: 0;
         }
         .beams-bg::before,

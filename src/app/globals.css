@@ -129,7 +129,7 @@
      * 2. min-height extends html element to cover safe area gap at bottom
      * 3. Works with viewport-fit=cover from the meta tag
      */
-    background-color: #0a0a0a;
+    background-color: #000;
     min-height: calc(100% + env(safe-area-inset-top));
     padding: 0;
     margin: 0;
@@ -146,6 +146,6 @@
     min-height: -webkit-fill-available;
     padding: 0;
     margin: 0;
-    background-color: #0a0a0a;
+    background-color: #000;
   }
 }
