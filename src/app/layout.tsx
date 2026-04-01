@@ -7,11 +7,16 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
+  themeColor: "#0a0a0a",
 };
 
 export const metadata: Metadata = {
   title: "365 Виджет — Календарь для iOS",
   description: "Маркет виджетов в стиле отрывного календаря для iOS",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export default function RootLayout({
