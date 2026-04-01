@@ -27,7 +27,7 @@ const features = [
   },
 ];
 
-const glassStyle = {
+const glassStyle: React.CSSProperties = {
   background: "linear-gradient(145deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 100%)",
   border: "1px solid rgba(255,255,255,0.10)",
   boxShadow: [
@@ -44,9 +44,11 @@ export default function LandingPage() {
   const cardRef = useRef<HTMLDivElement>(null);
   const [flipped, setFlipped] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const animating = useRef(false);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
+      if (animating.current) return;
       const card = cardRef.current;
       if (!card) return;
       const rect = card.getBoundingClientRect();
@@ -67,6 +69,7 @@ export default function LandingPage() {
   );
 
   const handleMouseLeave = useCallback(() => {
+    if (animating.current) return;
     const card = cardRef.current;
     if (!card) return;
     const flipBase = flipped ? 180 : 0;
@@ -75,67 +78,70 @@ export default function LandingPage() {
   }, [flipped]);
 
   const handleClick = useCallback(() => {
+    if (animating.current) return;
+    animating.current = true;
     const card = cardRef.current;
     if (!card) return;
-    // reset tilt before flip
-    card.style.transform = "";
-    setFlipped((prev) => !prev);
-  }, []);
+
+    const newFlipped = !flipped;
+    const target = newFlipped ? 180 : 0;
+
+    // set transition, then flip
+    card.style.transition = "transform 0.7s ease-in-out";
+    card.style.transform = `rotateX(0deg) rotateY(${target}deg)`;
+
+    setFlipped(newFlipped);
+
+    // after animation, remove transition so mousemove is instant
+    setTimeout(() => {
+      card.style.transition = "";
+      animating.current = false;
+    }, 700);
+  }, [flipped]);
 
   return (
     <BeamsBackground intensity="medium">
-      {/* perspective wrapper */}
-      <div className="relative w-full max-w-lg" style={{ perspective: 1200 }}>
+      {/* perspective + sizing wrapper */}
+      <div
+        style={{
+          perspective: 1200,
+          width: "min(88vw, 80vh, 32rem)",
+          height: "min(88vw, 80vh, 32rem)",
+        }}
+      >
         <div
           ref={cardRef}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
           onClick={handleClick}
-          className="relative w-full aspect-square cursor-pointer transition-all duration-700 ease-out hover:scale-[1.03]"
+          className="relative w-full h-full cursor-pointer"
           style={{
             "--glow-x": "50%",
             "--glow-y": "50%",
             transformStyle: "preserve-3d",
-            transform: flipped ? "rotateY(180deg)" : undefined,
           } as React.CSSProperties}
         >
           {/* ═══ FRONT ═══ */}
           <div
-            className="absolute inset-0 rounded-[32px] sm:rounded-[40px] overflow-hidden flex items-center"
+            className="absolute inset-0 rounded-[28px] sm:rounded-[36px] overflow-hidden flex items-center"
             style={{
               ...glassStyle,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
             }}
           >
-            {/* cursor glow — hidden until mouse enters */}
             <div
               className="absolute inset-0 pointer-events-none transition-opacity duration-300"
               style={{
                 background: "radial-gradient(circle at var(--glow-x) var(--glow-y), rgba(255,255,255,0.12) 0%, transparent 60%)",
-                opacity: hovered ? 1 : 0,
-              }}
-            />
-            {/* top reflection */}
-            <div
-              className="absolute inset-x-0 top-0 h-[30%] pointer-events-none"
-              style={{
-                background: "linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 100%)",
-                borderRadius: "32px 32px 0 0",
-              }}
-            />
-            {/* specular edge */}
-            <div
-              className="absolute inset-x-[10%] top-[0.5px] h-[1px] rounded-full pointer-events-none"
-              style={{
-                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4) 25%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.4) 75%, transparent)",
+                opacity: hovered && !flipped ? 1 : 0,
               }}
             />
 
-            <div className="relative z-10 px-6 sm:px-10 w-full" style={{ transform: "translateZ(30px)" }}>
-              <div className="flex justify-center mb-6 sm:mb-8">
+            <div className="relative z-10 px-5 sm:px-8 md:px-10 w-full">
+              <div className="flex justify-center mb-4 sm:mb-6 md:mb-8">
                 <span
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] sm:text-xs text-white/50 tracking-wide"
+                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] sm:text-xs text-white/50 tracking-wide"
                   style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500/80" />
@@ -143,7 +149,7 @@ export default function LandingPage() {
                 </span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center tracking-tight leading-[1.15] mb-3 sm:mb-4">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-center tracking-tight leading-[1.15] mb-2 sm:mb-4">
                 <span className="bg-clip-text text-transparent bg-gradient-to-b from-white to-white/80">
                   365 Виджет
                 </span>
@@ -153,18 +159,18 @@ export default function LandingPage() {
                 </span>
               </h1>
 
-              <p className="text-center text-sm sm:text-base text-white/35 font-light mb-8 sm:mb-10 max-w-xs mx-auto">
+              <p className="text-center text-xs sm:text-sm md:text-base text-white/35 font-light mb-5 sm:mb-8 max-w-xs mx-auto">
                 Маркет виджетов в стиле отрывного календаря для iOS.
               </p>
 
-              <p className="text-center text-xs sm:text-sm text-white/45 font-light inline-flex items-center justify-center gap-2 w-full">
+              <p className="text-center text-[11px] sm:text-sm text-white/45 font-light inline-flex items-center justify-center gap-2 w-full">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="opacity-70">
                   <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
                 </svg>
                 Скоро в App Store
               </p>
 
-              <p className="text-center text-white/15 text-[10px] mt-8 sm:mt-10">
+              <p className="text-center text-white/15 text-[9px] sm:text-[10px] mt-5 sm:mt-8">
                 &copy; 2026 &ldquo;365 Виджет&rdquo;
               </p>
             </div>
@@ -172,7 +178,7 @@ export default function LandingPage() {
 
           {/* ═══ BACK ═══ */}
           <div
-            className="absolute inset-0 rounded-[32px] sm:rounded-[40px] overflow-hidden flex items-center"
+            className="absolute inset-0 rounded-[28px] sm:rounded-[36px] overflow-hidden flex items-center"
             style={{
               ...glassStyle,
               backfaceVisibility: "hidden",
@@ -180,7 +186,6 @@ export default function LandingPage() {
               transform: "rotateY(180deg)",
             }}
           >
-            {/* cursor glow */}
             <div
               className="absolute inset-0 pointer-events-none transition-opacity duration-300"
               style={{
@@ -188,45 +193,31 @@ export default function LandingPage() {
                 opacity: hovered && flipped ? 1 : 0,
               }}
             />
-            {/* top reflection */}
-            <div
-              className="absolute inset-x-0 top-0 h-[30%] pointer-events-none"
-              style={{
-                background: "linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 100%)",
-                borderRadius: "32px 32px 0 0",
-              }}
-            />
-            <div
-              className="absolute inset-x-[10%] top-[0.5px] h-[1px] rounded-full pointer-events-none"
-              style={{
-                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4) 25%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.4) 75%, transparent)",
-              }}
-            />
 
-            <div className="relative z-10 px-6 sm:px-10 w-full">
-              <h2 className="text-xl sm:text-2xl font-bold text-center text-white/80 mb-8 sm:mb-10">
+            <div className="relative z-10 px-5 sm:px-8 md:px-10 w-full">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-center text-white/80 mb-5 sm:mb-8">
                 Возможности
               </h2>
 
-              <div className="grid grid-cols-2 gap-4 sm:gap-5 mb-8 sm:mb-10">
+              <div className="grid grid-cols-2 gap-3 sm:gap-5 mb-5 sm:mb-8">
                 {features.map((f) => (
-                  <div key={f.title} className="flex flex-col gap-2">
+                  <div key={f.title} className="flex flex-col gap-1.5 sm:gap-2">
                     <div
-                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center"
                       style={{
                         background: "rgba(255,255,255,0.05)",
                         border: "1px solid rgba(255,255,255,0.06)",
                       }}
                     >
-                      <f.icon className="w-4 h-4 sm:w-5 sm:h-5 text-white/50" strokeWidth={1.5} />
+                      <f.icon className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-white/50" strokeWidth={1.5} />
                     </div>
-                    <h3 className="text-xs sm:text-sm font-semibold text-white/80">{f.title}</h3>
-                    <p className="text-[11px] sm:text-xs text-white/30 font-light leading-relaxed">{f.desc}</p>
+                    <h3 className="text-[11px] sm:text-sm font-semibold text-white/80">{f.title}</h3>
+                    <p className="text-[10px] sm:text-xs text-white/30 font-light leading-relaxed">{f.desc}</p>
                   </div>
                 ))}
               </div>
 
-              <p className="text-center text-white/20 text-[11px]">
+              <p className="text-center text-white/20 text-[10px] sm:text-[11px]">
                 Нажмите, чтобы вернуться
               </p>
             </div>
