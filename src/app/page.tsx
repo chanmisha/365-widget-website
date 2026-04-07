@@ -5,7 +5,6 @@ import Link from "next/link";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Calendar, Palette, Store, Smartphone } from "lucide-react";
 import { PaperShaderBackground } from "@/components/paper-shader-background";
-import { GlowingShadowWrapper } from "@/components/glowing-shadow-wrapper";
 
 const features = [
   {
@@ -109,7 +108,6 @@ export default function LandingPage() {
           height: "min(88vw, 62vh, 28rem)",
         }}
       >
-        <GlowingShadowWrapper>
         {/* flip layer — CSS transition for 180deg, no interference with tilt */}
         <div
           className="relative w-full h-full transition-transform duration-700 ease-in-out"
@@ -232,7 +230,6 @@ export default function LandingPage() {
             </div>
           </motion.div>
         </div>
-        </GlowingShadowWrapper>
       </div>
 
         {/* Legal links under the card */}
