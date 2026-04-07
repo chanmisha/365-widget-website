@@ -280,13 +280,11 @@ export function NeuralNoise({
       className="fixed pointer-events-none"
       style={{
         opacity,
-        // Extend canvas into iOS safe-area so the shader covers status bar / home indicator
-        top: "calc(-1 * env(safe-area-inset-top, 0px))",
-        left: "calc(-1 * env(safe-area-inset-left, 0px))",
-        width:
-          "calc(100vw + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))",
-        height:
-          "calc(100vh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        // 100lvh = large viewport height (full screen on iOS Safari, includes safe areas)
+        height: "100lvh",
       }}
     />
   );
@@ -303,12 +301,10 @@ export function NeuralNoiseBackground({
     <div
       className="fixed overflow-hidden bg-black"
       style={{
-        top: "calc(-1 * env(safe-area-inset-top, 0px))",
-        left: "calc(-1 * env(safe-area-inset-left, 0px))",
-        width:
-          "calc(100vw + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))",
-        height:
-          "calc(100vh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100lvh",
       }}
     >
       <NeuralNoise color={[0.9, 0.2, 0.4]} opacity={0.95} speed={0.001} />
