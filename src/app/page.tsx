@@ -104,8 +104,8 @@ export default function LandingPage() {
         className="cursor-pointer"
         style={{
           perspective: 1200,
-          width: "min(88vw, 80vh, 32rem)",
-          height: "min(88vw, 80vh, 32rem)",
+          width: "min(88vw, 62vh, 28rem)",
+          height: "min(88vw, 62vh, 28rem)",
         }}
       >
         {/* flip layer — CSS transition for 180deg, no interference with tilt */}
