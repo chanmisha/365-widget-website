@@ -100,7 +100,8 @@ export function NeuralNoise({
         noise = 1.2 * pow(noise, 3.0);
         noise += pow(noise, 10.0);
         noise = max(0.0, noise - 0.5);
-        noise *= (1.0 - length(vUv - 0.5));
+        // Soft vignette — keep edges visible (avoid black bars in landscape)
+        noise *= mix(1.0, (1.0 - length(vUv - 0.5)), 0.35);
 
         col = u_color * noise;
         gl_FragColor = vec4(col, noise);
@@ -227,8 +228,12 @@ export function NeuralNoise({
     if (!canvasEl || !gl) return;
 
     const devicePixelRatio = Math.min(window.devicePixelRatio, 2);
-    canvasEl.width = window.innerWidth * devicePixelRatio;
-    canvasEl.height = window.innerHeight * devicePixelRatio;
+    // Use the canvas's actual rendered CSS size (which is 100vw/100vh via inline style)
+    // This avoids window.innerWidth/Height undercounting safe-area on iOS Safari.
+    const cssWidth = canvasEl.clientWidth || window.innerWidth;
+    const cssHeight = canvasEl.clientHeight || window.innerHeight;
+    canvasEl.width = cssWidth * devicePixelRatio;
+    canvasEl.height = cssHeight * devicePixelRatio;
 
     if (uniformsRef.current.u_ratio) {
       gl.uniform1f(
@@ -272,8 +277,12 @@ export function NeuralNoise({
   return (
     <canvas
       ref={canvasRef}
-      className="fixed top-0 left-0 w-full h-full pointer-events-none"
-      style={{ opacity }}
+      className="fixed top-0 left-0 pointer-events-none"
+      style={{
+        opacity,
+        width: "100vw",
+        height: "100vh",
+      }}
     />
   );
 }
@@ -286,7 +295,10 @@ export function NeuralNoiseBackground({
   children,
 }: NeuralNoiseBackgroundProps) {
   return (
-    <div className="fixed inset-0 overflow-hidden bg-black">
+    <div
+      className="fixed top-0 left-0 overflow-hidden bg-black"
+      style={{ width: "100vw", height: "100vh" }}
+    >
       <NeuralNoise color={[0.9, 0.2, 0.4]} opacity={0.95} speed={0.001} />
       <div className="relative z-10 flex items-center justify-center w-full h-full p-4">
         {children}
