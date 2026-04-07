@@ -277,11 +277,16 @@ export function NeuralNoise({
   return (
     <canvas
       ref={canvasRef}
-      className="fixed top-0 left-0 pointer-events-none"
+      className="fixed pointer-events-none"
       style={{
         opacity,
-        width: "100vw",
-        height: "100vh",
+        // Extend canvas into iOS safe-area so the shader covers status bar / home indicator
+        top: "calc(-1 * env(safe-area-inset-top, 0px))",
+        left: "calc(-1 * env(safe-area-inset-left, 0px))",
+        width:
+          "calc(100vw + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))",
+        height:
+          "calc(100vh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))",
       }}
     />
   );
@@ -296,11 +301,18 @@ export function NeuralNoiseBackground({
 }: NeuralNoiseBackgroundProps) {
   return (
     <div
-      className="fixed top-0 left-0 overflow-hidden bg-black"
-      style={{ width: "100vw", height: "100vh" }}
+      className="fixed overflow-hidden bg-black"
+      style={{
+        top: "calc(-1 * env(safe-area-inset-top, 0px))",
+        left: "calc(-1 * env(safe-area-inset-left, 0px))",
+        width:
+          "calc(100vw + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))",
+        height:
+          "calc(100vh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))",
+      }}
     >
       <NeuralNoise color={[0.9, 0.2, 0.4]} opacity={0.95} speed={0.001} />
-      <div className="relative z-10 flex items-center justify-center w-full h-full p-4">
+      <div className="bg-content relative z-10 flex items-center justify-center w-full h-full p-4">
         {children}
       </div>
     </div>
