@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useCallback, useState } from "react";
+import Link from "next/link";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Calendar, Palette, Store, Smartphone } from "lucide-react";
 import { BeamsBackground } from "@/components/beams-background";
@@ -94,6 +95,7 @@ export default function LandingPage() {
 
   return (
     <BeamsBackground intensity="medium">
+      <div className="flex flex-col items-center">
       {/* STATIC wrapper — mouse events here. Never transforms. */}
       <div
         onMouseMove={handleMouseMove}
@@ -228,6 +230,24 @@ export default function LandingPage() {
             </div>
           </motion.div>
         </div>
+      </div>
+
+        {/* Legal links under the card */}
+        <nav className="mt-6 sm:mt-8 flex items-center gap-4 sm:gap-6 text-[10px] sm:text-xs text-white/40">
+          <Link
+            href="/privacy"
+            className="hover:text-white/80 transition-colors"
+          >
+            Политика конфиденциальности
+          </Link>
+          <span className="text-white/20">·</span>
+          <Link
+            href="/terms"
+            className="hover:text-white/80 transition-colors"
+          >
+            Условия использования
+          </Link>
+        </nav>
       </div>
     </BeamsBackground>
   );
