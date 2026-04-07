@@ -4,7 +4,7 @@ import { useRef, useCallback, useState } from "react";
 import Link from "next/link";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Calendar, Palette, Store, Smartphone } from "lucide-react";
-import { BeamsBackground } from "@/components/beams-background";
+import { PaperShaderBackground } from "@/components/paper-shader-background";
 
 const features = [
   {
@@ -94,7 +94,7 @@ export default function LandingPage() {
   }, [tiltX, tiltY]);
 
   return (
-    <BeamsBackground intensity="medium">
+    <PaperShaderBackground>
       <div className="flex flex-col items-center">
       {/* STATIC wrapper — mouse events here. Never transforms. */}
       <div
@@ -249,6 +249,6 @@ export default function LandingPage() {
           </Link>
         </nav>
       </div>
-    </BeamsBackground>
+    </PaperShaderBackground>
   );
 }
