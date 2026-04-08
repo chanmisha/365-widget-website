@@ -29,13 +29,39 @@ export function NeuralNoise({
     const resizeListener = () => resizeCanvas();
     window.addEventListener("resize", resizeListener);
 
-    gl.uniform3f(uniformsRef.current.u_color, color[0], color[1], color[2]);
-    gl.uniform1f(uniformsRef.current.u_speed, speed);
+    // Respect prefers-reduced-motion: render one frame, then freeze
+    const reduceMotionMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const prefersReduced = reduceMotionMQ.matches;
 
-    render();
+    // Pause render loop when tab is hidden — saves battery
+    const handleVisibility = () => {
+      if (document.hidden) {
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = undefined;
+        }
+      } else if (!animationFrameRef.current && !prefersReduced) {
+        render();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    gl.uniform3f(uniformsRef.current.u_color, color[0], color[1], color[2]);
+    gl.uniform1f(uniformsRef.current.u_speed, prefersReduced ? 0 : speed);
+
+    if (prefersReduced) {
+      // Render a single static frame instead of looping
+      const currentTime = performance.now();
+      gl.uniform1f(uniformsRef.current.u_time, currentTime);
+      gl.uniform2f(uniformsRef.current.u_pointer_position, 0.5, 0.5);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    } else {
+      render();
+    }
 
     return () => {
       window.removeEventListener("resize", resizeListener);
+      document.removeEventListener("visibilitychange", handleVisibility);
       cleanupEvents();
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);

@@ -16,7 +16,8 @@ export default function PrivacyPage() {
       <div className="mx-auto max-w-3xl px-6 py-16 sm:py-20">
         <Link
           href="/"
-          className="inline-block mb-10 text-xs sm:text-sm text-white/50 hover:text-white/80 transition"
+          className="inline-block mb-10 text-xs sm:text-sm text-white/50 hover:text-white/80"
+          style={{ transition: "color 200ms cubic-bezier(0.23, 1, 0.32, 1)" }}
         >
           ← На главную
         </Link>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import Link from "next/link";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform, useReducedMotion } from "framer-motion";
 import { Calendar, Palette, Store, Smartphone } from "lucide-react";
 import { NeuralNoiseBackground } from "@/components/neural-noise";
 
@@ -45,13 +45,26 @@ const glassStyle: React.CSSProperties = {
 export default function LandingPage() {
   const [flipped, setFlipped] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [pressed, setPressed] = useState(false);
+  const [canHover, setCanHover] = useState(false);
   const animating = useRef(false);
+  const shouldReduceMotion = useReducedMotion();
+
+  // Detect hover-capable + fine-pointer device (no phantom mousemove on touch)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    setCanHover(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setCanHover(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   // tilt via springs — bypasses React render, writes directly to DOM
   const tiltX = useMotionValue(0);
   const tiltY = useMotionValue(0);
-  const springX = useSpring(tiltX, { stiffness: 200, damping: 20 });
-  const springY = useSpring(tiltY, { stiffness: 200, damping: 20 });
+  const springX = useSpring(tiltX, { stiffness: 150, damping: 18 });
+  const springY = useSpring(tiltY, { stiffness: 150, damping: 18 });
 
   // glow position
   const glowX = useMotionValue(50);
@@ -64,22 +77,25 @@ export default function LandingPage() {
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (animating.current) return;
+      // Skip tilt on touch devices and when user prefers reduced motion
+      if (!canHover || shouldReduceMotion) return;
       const rect = e.currentTarget.getBoundingClientRect();
       const px = (e.clientX - rect.left) / rect.width - 0.5;
       const py = (e.clientY - rect.top) / rect.height - 0.5;
-      tiltX.set(py * -14);
-      tiltY.set(px * 14);
+      tiltX.set(py * -12);
+      tiltY.set(px * 12);
       glowX.set(((e.clientX - rect.left) / rect.width) * 100);
       glowY.set(((e.clientY - rect.top) / rect.height) * 100);
       if (!hovered) setHovered(true);
     },
-    [tiltX, tiltY, glowX, glowY, hovered]
+    [tiltX, tiltY, glowX, glowY, hovered, canHover, shouldReduceMotion]
   );
 
   const handleMouseLeave = useCallback(() => {
     tiltX.set(0);
     tiltY.set(0);
     setHovered(false);
+    setPressed(false);
   }, [tiltX, tiltY]);
 
   const handleClick = useCallback(() => {
@@ -88,10 +104,17 @@ export default function LandingPage() {
     tiltX.set(0);
     tiltY.set(0);
     setFlipped((prev) => !prev);
+    // Released by transitionend on the flip layer; this is just a safety net
     setTimeout(() => {
       animating.current = false;
-    }, 700);
+    }, 800);
   }, [tiltX, tiltY]);
+
+  const handleFlipEnd = useCallback((e: React.TransitionEvent<HTMLDivElement>) => {
+    if (e.propertyName === "transform") {
+      animating.current = false;
+    }
+  }, []);
 
   return (
     <NeuralNoiseBackground>
@@ -101,19 +124,28 @@ export default function LandingPage() {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
-        className="cursor-pointer"
+        onPointerDown={() => setPressed(true)}
+        onPointerUp={() => setPressed(false)}
+        onPointerCancel={() => setPressed(false)}
+        className="cursor-pointer select-none"
         style={{
           perspective: 1200,
           width: "min(88vw, 62vh, 28rem)",
           height: "min(88vw, 62vh, 28rem)",
+          transform: pressed ? "scale(0.98)" : "scale(1)",
+          transition: "transform 160ms var(--ease-out)",
         }}
       >
         {/* flip layer — CSS transition for 180deg, no interference with tilt */}
         <div
-          className="relative w-full h-full transition-transform duration-700 ease-in-out"
+          className="relative w-full h-full"
+          onTransitionEnd={handleFlipEnd}
           style={{
             transformStyle: "preserve-3d",
             transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+            transition: shouldReduceMotion
+              ? "none"
+              : "transform 600ms var(--ease-drawer)",
           }}
         >
           {/* tilt layer — spring-based, instant, no CSS transition */}
@@ -140,7 +172,7 @@ export default function LandingPage() {
                 style={{
                   background: glowBg,
                   opacity: hovered && !flipped ? 1 : 0,
-                  transition: "opacity 0.3s",
+                  transition: "opacity 200ms var(--ease-out)",
                 }}
               />
 
@@ -150,7 +182,10 @@ export default function LandingPage() {
                     className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] sm:text-xs text-white/50 tracking-wide lc-badge"
                     style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500/80 animate-pulse" />
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-rose-500/80"
+                      style={{ boxShadow: "0 0 6px rgba(244, 63, 94, 0.6)" }}
+                    />
                     Coming Soon
                   </span>
                 </div>
@@ -196,7 +231,7 @@ export default function LandingPage() {
                 style={{
                   background: glowBg,
                   opacity: hovered && flipped ? 1 : 0,
-                  transition: "opacity 0.3s",
+                  transition: "opacity 200ms var(--ease-out)",
                 }}
               />
 
@@ -236,14 +271,16 @@ export default function LandingPage() {
         <nav className="mt-6 sm:mt-8 flex items-center gap-4 sm:gap-6 text-[10px] sm:text-xs text-white/40 lc-legal">
           <Link
             href="/privacy"
-            className="hover:text-white/80 transition-colors"
+            className="hover:text-white/80"
+            style={{ transition: "color 200ms var(--ease-out)" }}
           >
             Политика конфиденциальности
           </Link>
           <span className="text-white/20">·</span>
           <Link
             href="/terms"
-            className="hover:text-white/80 transition-colors"
+            className="hover:text-white/80"
+            style={{ transition: "color 200ms var(--ease-out)" }}
           >
             Условия использования
           </Link>
