@@ -1,0 +1,14 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "BGNRGXU5DH.com.chanmisha.365",
+        "paths": [
+          "/payment/*",
+          "/open/*"
+        ]
+      }
+    ]
+  }
+}
